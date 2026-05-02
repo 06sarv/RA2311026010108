@@ -1,15 +1,1 @@
-'use strict';
-
-function NotificationComposer({ title, body, onSubmit }) {
-  return {
-    type: 'NotificationComposer',
-    title,
-    body,
-    onSubmit,
-  };
-}
-
-module.exports = {
-  NotificationComposer,
-};
-
+export { NotificationComposer } from './NotificationComposer.jsx';

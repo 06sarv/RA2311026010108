@@ -1,8 +1,16 @@
-'use strict';
+import { Log, configureLogger } from '../../../logging middleware/browser.js';
 
-const { Log, configureLogger } = require('../../../logging middleware/index');
+let logListener = null;
 
-function configureFrontendLogger(token, endpoint) {
+function clampMessage(message) {
+  return String(message).trim().slice(0, 48);
+}
+
+export function setLogListener(listener) {
+  logListener = typeof listener === 'function' ? listener : null;
+}
+
+export function configureFrontendLogger(token, endpoint) {
   const nextConfig = {};
 
   if (typeof token === 'string' && token.trim() !== '') {
@@ -16,13 +24,28 @@ function configureFrontendLogger(token, endpoint) {
   return configureLogger(nextConfig);
 }
 
-async function logFrontendEvent(level, pkg, message) {
-  return Log('frontend', level, pkg, message);
-}
+export async function logFrontendEvent(level, pkg, message) {
+  const safeMessage = clampMessage(message);
 
-module.exports = {
-  Log,
-  configureLogger,
-  configureFrontendLogger,
-  logFrontendEvent,
-};
+  if (logListener) {
+    logListener({
+      level,
+      packageName: pkg,
+      message: safeMessage,
+    });
+  }
+
+  try {
+    return await Log('frontend', level, pkg, safeMessage);
+  } catch (error) {
+    if (logListener) {
+      logListener({
+        level: 'warn',
+        packageName: 'utils',
+        message: 'remote log skipped',
+      });
+    }
+
+    return null;
+  }
+}

@@ -1,9 +1,5 @@
-'use strict';
-
-const { Log, configureLogger } = require('../../../logging middleware/index');
-
-module.exports = {
-  Log,
-  configureLogger,
-};
-
+export {
+  configureFrontendLogger,
+  logFrontendEvent,
+  setLogListener,
+} from '@/utils/logger.js';
