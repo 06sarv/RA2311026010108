@@ -10,14 +10,19 @@ export function LogFeed({ items }) {
           {items.map((item) => (
             <Stack
               key={item.id}
-              direction={{ xs: 'column', md: 'row' }}
-              spacing={1.5}
-              alignItems={{ xs: 'flex-start', md: 'center' }}
+              spacing={0.5}
+              sx={{
+                py: 1,
+                borderBottom: '1px solid rgba(15, 76, 92, 0.08)',
+                '&:last-child': { borderBottom: 'none', pb: 0 },
+              }}
             >
-              <Chip size="small" color="primary" label={item.level} />
-              <Typography variant="body2" sx={{ minWidth: 84 }}>
-                {item.packageName}
-              </Typography>
+              <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                <Chip size="small" color="primary" label={item.level} />
+                <Typography variant="body2" sx={{ minWidth: 84 }}>
+                  {item.packageName}
+                </Typography>
+              </Stack>
               <Typography variant="body2" color="text.secondary">
                 {item.message}
               </Typography>

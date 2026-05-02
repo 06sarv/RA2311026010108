@@ -1,5 +1,15 @@
 import React, { useEffect } from 'react';
-import { Alert, Grid, LinearProgress, Stack } from '@mui/material';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Alert,
+  Grid,
+  LinearProgress,
+  Stack,
+  Typography,
+} from '@mui/material';
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import { NotificationComposer } from '@/component/NotificationComposer.jsx';
 import { NotificationDetail } from '@/component/NotificationDetail.jsx';
 import { NotificationShell } from '@/component/NotificationShell.jsx';
@@ -68,8 +78,30 @@ export function NotificationPageFrame({
         </Grid>
         <Grid size={{ xs: 12, lg: 4 }}>
           <Stack spacing={3}>
-            <TokenPanel defaultValue={token} onSave={saveToken} />
-            <LogFeed items={logs} />
+            <Stack sx={{ display: { xs: 'none', lg: 'flex' } }} spacing={3}>
+              <TokenPanel defaultValue={token} onSave={saveToken} />
+              <LogFeed items={logs} />
+            </Stack>
+
+            <Stack sx={{ display: { xs: 'flex', lg: 'none' } }} spacing={2}>
+              <Accordion disableGutters sx={{ borderRadius: 4, overflow: 'hidden' }}>
+                <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+                  <Typography fontWeight={700}>Access Token</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <TokenPanel defaultValue={token} onSave={saveToken} />
+                </AccordionDetails>
+              </Accordion>
+
+              <Accordion disableGutters sx={{ borderRadius: 4, overflow: 'hidden' }}>
+                <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+                  <Typography fontWeight={700}>Frontend Logs</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <LogFeed items={logs} />
+                </AccordionDetails>
+              </Accordion>
+            </Stack>
           </Stack>
         </Grid>
       </Grid>

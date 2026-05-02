@@ -31,14 +31,30 @@ export function NotificationShell({ eyebrow, title, subtitle, children }) {
           color: 'primary.main',
         }}
       >
-        <Toolbar sx={{ justifyContent: 'space-between', py: 1 }}>
-          <Stack direction="row" spacing={1.5} alignItems="center">
+        <Toolbar
+          sx={{
+            justifyContent: 'space-between',
+            py: 1,
+            gap: 1.5,
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'flex-start', sm: 'center' },
+          }}
+        >
+          <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
             <Chip label="Campus Console" color="secondary" />
-            <Typography variant="subtitle1" fontWeight={700}>
+            <Typography
+              variant="subtitle1"
+              fontWeight={700}
+              sx={{ fontSize: { xs: '0.95rem', sm: '1rem' } }}
+            >
               Notification Operations
             </Typography>
           </Stack>
-          <Stack direction="row" spacing={1}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ width: { xs: '100%', sm: 'auto' }, flexWrap: 'wrap' }}
+          >
             <Button component={NavLink} to="/" color="inherit">
               All Notifications
             </Button>
@@ -49,7 +65,7 @@ export function NotificationShell({ eyebrow, title, subtitle, children }) {
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="xl" sx={{ pt: 6 }}>
+      <Container maxWidth="xl" sx={{ pt: { xs: 3, md: 6 }, px: { xs: 2, sm: 3 } }}>
         <Stack spacing={1.5} sx={{ mb: 4 }}>
           <Typography
             variant="overline"
@@ -57,8 +73,17 @@ export function NotificationShell({ eyebrow, title, subtitle, children }) {
           >
             {eyebrow}
           </Typography>
-          <Typography variant="h3">{title}</Typography>
-          <Typography variant="h6" sx={{ maxWidth: 780, color: 'text.secondary' }}>
+          <Typography variant="h3" sx={{ fontSize: { xs: '2.4rem', md: '3rem' } }}>
+            {title}
+          </Typography>
+          <Typography
+            variant="h6"
+            sx={{
+              maxWidth: 780,
+              color: 'text.secondary',
+              fontSize: { xs: '1.05rem', md: '1.25rem' },
+            }}
+          >
             {subtitle}
           </Typography>
         </Stack>

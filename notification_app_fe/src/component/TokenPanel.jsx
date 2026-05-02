@@ -23,8 +23,8 @@ export function TokenPanel({ defaultValue, onSave }) {
           onChange={(event) => setValue(event.target.value)}
           placeholder="Paste access token"
           multiline
-          minRows={3}
-          maxRows={6}
+          minRows={2}
+          maxRows={4}
         />
         <Button variant="contained" onClick={handleSave}>
           Save token
