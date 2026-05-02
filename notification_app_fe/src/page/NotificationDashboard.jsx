@@ -7,7 +7,7 @@ import {
 } from './shared.jsx';
 
 export function NotificationDashboard() {
-  const consoleState = useNotificationConsole();
+  const consoleState = useNotificationConsole('feed');
   const common = buildCommonPageModel(consoleState);
 
   return (

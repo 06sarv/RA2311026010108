@@ -13,8 +13,8 @@ import {
 } from './shared.jsx';
 
 export function PriorityInboxPage() {
-  const consoleState = useNotificationConsole();
-  const common = buildCommonPageModel(consoleState);
+  const consoleState = useNotificationConsole('priority');
+  const common = buildCommonPageModel(consoleState, { priorityMode: true });
 
   return (
     <NotificationPageFrame
@@ -35,10 +35,10 @@ export function PriorityInboxPage() {
           </Paper>
           {consoleState.state.notificationType !== 'All' ? (
             <Alert severity="info">
-              The current type filter is applied before ranking the priority inbox.
+              The current type filter is applied before the inbox fetch.
             </Alert>
           ) : null}
-          {buildPrimaryList(consoleState, common.priorityNotifications)}
+          {buildPrimaryList(consoleState, consoleState.state.notifications)}
         </Stack>
       }
       logs={consoleState.logs}

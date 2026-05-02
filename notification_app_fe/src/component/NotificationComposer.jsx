@@ -17,6 +17,7 @@ export function NotificationComposer({
   onTypeChange,
   onPriorityLimitChange,
   showPriorityLimit = false,
+  showFeedLimit = true,
 }) {
   return (
     <Paper sx={{ p: 3, border: '1px solid rgba(15, 76, 92, 0.08)' }}>
@@ -36,19 +37,21 @@ export function NotificationComposer({
               </MenuItem>
             ))}
           </TextField>
-          <TextField
-            select
-            label="Rows per page"
-            value={limit}
-            onChange={(event) => onLimitChange(Number(event.target.value))}
-            fullWidth
-          >
-            {[5, 10].map((value) => (
-              <MenuItem key={value} value={value}>
-                {value}
-              </MenuItem>
-            ))}
-          </TextField>
+          {showFeedLimit ? (
+            <TextField
+              select
+              label="Rows per page"
+              value={limit}
+              onChange={(event) => onLimitChange(Number(event.target.value))}
+              fullWidth
+            >
+              {[5, 10].map((value) => (
+                <MenuItem key={value} value={value}>
+                  {value}
+                </MenuItem>
+              ))}
+            </TextField>
+          ) : null}
         </Stack>
         {showPriorityLimit ? (
           <Stack spacing={1.5}>
@@ -58,7 +61,7 @@ export function NotificationComposer({
             <Slider
               value={priorityLimit}
               min={3}
-              max={15}
+              max={20}
               step={1}
               marks
               onChange={(_, value) => onPriorityLimitChange(value)}

@@ -10,11 +10,11 @@ import { TokenPanel } from '@/component/TokenPanel.jsx';
 import { LogFeed } from '@/component/LogFeed.jsx';
 import { useNotifications } from '@/hook/useNotifications.js';
 import { useLogs } from '@/hook/useLogs.js';
-import { getPriorityNotifications, getStatusBreakdown } from '@/state/notificationState.js';
+import { getStatusBreakdown } from '@/state/notificationState.js';
 import { logFrontendEvent, setLogListener } from '@/utils/logger.js';
 
-export function useNotificationConsole() {
-  const notificationState = useNotifications();
+export function useNotificationConsole(mode = 'feed') {
+  const notificationState = useNotifications(mode);
   const logState = useLogs();
 
   useEffect(() => {
@@ -82,12 +82,9 @@ export function NotificationPageFrame({
   );
 }
 
-export function buildCommonPageModel(consoleState) {
+export function buildCommonPageModel(consoleState, options = {}) {
+  const { priorityMode = false } = options;
   const summary = getStatusBreakdown(consoleState.state.notifications);
-  const priorityNotifications = getPriorityNotifications(
-    consoleState.state.notifications,
-    consoleState.state.priorityLimit
-  );
 
   const controls = (
     <NotificationComposer
@@ -100,22 +97,24 @@ export function buildCommonPageModel(consoleState) {
         consoleState.dispatch({ type: 'priorityLimitChanged', payload: value })
       }
       showPriorityLimit
+      showFeedLimit={!priorityMode}
     />
   );
 
-  const pagination = (
-    <PaginationStrip
-      page={consoleState.state.page}
-      onChange={(value) => consoleState.dispatch({ type: 'pageChanged', payload: value })}
-      hasFullPage={consoleState.state.notifications.length === consoleState.state.limit}
-      countHint={consoleState.state.page * consoleState.state.limit}
-    />
-  );
+  const pagination = priorityMode
+    ? null
+    : (
+        <PaginationStrip
+          page={consoleState.state.page}
+          onChange={(value) => consoleState.dispatch({ type: 'pageChanged', payload: value })}
+          hasFullPage={consoleState.state.notifications.length === consoleState.state.limit}
+          countHint={consoleState.state.page * consoleState.state.limit}
+        />
+      );
 
   return {
     controls,
     pagination,
-    priorityNotifications,
     summary,
   };
 }

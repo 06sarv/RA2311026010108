@@ -1,6 +1,12 @@
 import { logFrontendEvent } from '@/utils/logger.js';
 
 const BASE_ENDPOINT = '/evaluation-service/notifications';
+const priorityOrder = ['Placement', 'Result', 'Event'];
+const priorityWeights = {
+  Placement: 3,
+  Result: 2,
+  Event: 1,
+};
 
 function readAuthToken() {
   const runtimeToken = window.localStorage.getItem('evaluation_access_token');
@@ -71,7 +77,22 @@ function ensureNotificationsShape(payload) {
   return payload.notifications;
 }
 
-export async function fetchNotifications(params) {
+function sortPriorityNotifications(notifications) {
+  return [...notifications].sort((left, right) => {
+    const weightDelta = priorityWeights[right.Type] - priorityWeights[left.Type];
+
+    if (weightDelta !== 0) {
+      return weightDelta;
+    }
+
+    return (
+      Date.parse(right.Timestamp.replace(' ', 'T')) -
+      Date.parse(left.Timestamp.replace(' ', 'T'))
+    );
+  });
+}
+
+async function fetchNotificationRequest(params, startedMessage, successPrefix) {
   const token = readAuthToken();
 
   if (!token) {
@@ -80,7 +101,7 @@ export async function fetchNotifications(params) {
   }
 
   const requestUrl = buildUrl(params);
-  await logFrontendEvent('info', 'api', 'feed fetch started');
+  await logFrontendEvent('info', 'api', startedMessage);
 
   const response = await fetch(requestUrl, {
     method: 'GET',
@@ -104,9 +125,70 @@ export async function fetchNotifications(params) {
   }
 
   const notifications = ensureNotificationsShape(payload);
-  await logFrontendEvent('info', 'api', `feed loaded ${notifications.length}`);
+  await logFrontendEvent('info', 'api', `${successPrefix} ${notifications.length}`);
 
   return notifications;
+}
+
+export async function fetchNotifications(params) {
+  return fetchNotificationRequest(params, 'feed fetch started', 'feed loaded');
+}
+
+async function fetchPriorityTypeSlice(notificationType, remainingCount) {
+  const collected = [];
+  let page = 1;
+
+  while (collected.length < remainingCount) {
+    const pageLimit = Math.min(remainingCount - collected.length, 10);
+
+    const pageItems = await fetchNotificationRequest(
+      {
+        page,
+        limit: pageLimit,
+        notificationType,
+      },
+      'priority fetch started',
+      'priority loaded'
+    );
+
+    if (pageItems.length === 0) {
+      break;
+    }
+
+    collected.push(...pageItems);
+
+    if (pageItems.length < pageLimit) {
+      break;
+    }
+
+    page += 1;
+  }
+
+  return collected;
+}
+
+export async function fetchPriorityNotifications({ limit, notificationType }) {
+  const safeLimit = Math.max(1, Number(limit) || 1);
+
+  if (notificationType && notificationType !== 'All') {
+    const items = await fetchPriorityTypeSlice(notificationType, safeLimit);
+    return sortPriorityNotifications(items).slice(0, safeLimit);
+  }
+
+  const collected = [];
+
+  for (const type of priorityOrder) {
+    const remainingCount = safeLimit - collected.length;
+
+    if (remainingCount <= 0) {
+      break;
+    }
+
+    const typeItems = await fetchPriorityTypeSlice(type, remainingCount);
+    collected.push(...typeItems);
+  }
+
+  return sortPriorityNotifications(collected).slice(0, safeLimit);
 }
 
 export function saveAccessToken(token) {

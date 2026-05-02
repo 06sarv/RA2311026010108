@@ -1,5 +1,10 @@
 import { useEffect, useReducer, useRef, useState } from 'react';
-import { fetchNotifications, getStoredAccessToken, saveAccessToken } from '@/api/notifications.js';
+import {
+  fetchNotifications,
+  fetchPriorityNotifications,
+  getStoredAccessToken,
+  saveAccessToken,
+} from '@/api/notifications.js';
 import {
   initialState,
   notificationsReducer,
@@ -8,7 +13,7 @@ import { configureFrontendLogger, logFrontendEvent } from '@/utils/logger.js';
 
 const viewedKey = 'campus_notification_viewed_ids';
 
-export function useNotifications() {
+export function useNotifications(mode = 'feed') {
   const [state, dispatch] = useReducer(notificationsReducer, initialState);
   const [tokenRevision, setTokenRevision] = useState(0);
   const hasHydratedViewedIds = useRef(false);
@@ -43,11 +48,17 @@ export function useNotifications() {
       await logFrontendEvent('info', 'hook', 'notification load');
 
       try {
-        const notifications = await fetchNotifications({
-          page: state.page,
-          limit: state.limit,
-          notificationType: state.notificationType,
-        });
+        const notifications =
+          mode === 'priority'
+            ? await fetchPriorityNotifications({
+                limit: state.priorityLimit,
+                notificationType: state.notificationType,
+              })
+            : await fetchNotifications({
+                page: state.page,
+                limit: state.limit,
+                notificationType: state.notificationType,
+              });
 
         if (!cancelled) {
           dispatch({ type: 'loadSucceeded', payload: notifications });
@@ -64,7 +75,7 @@ export function useNotifications() {
     return () => {
       cancelled = true;
     };
-  }, [state.page, state.limit, state.notificationType, tokenRevision]);
+  }, [mode, state.page, state.limit, state.notificationType, state.priorityLimit, tokenRevision]);
 
   async function updateAccessToken(token) {
     saveAccessToken(token);
