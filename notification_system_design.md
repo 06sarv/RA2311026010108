@@ -74,4 +74,4 @@ Messages were kept short to satisfy the remote logging API validation constraint
 ## Output
 The Stage 1 runner prints the ranked notifications in a stable table layout so the result can be captured as evidence and compared easily after future changes.
 
-![Stage 1 Output](./stage1_OP.png)
+![Stage 1 Output](./output/stage1/stage1_output.png)
