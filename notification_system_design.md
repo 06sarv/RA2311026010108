@@ -1,35 +1,77 @@
-# Notification System Design
+# Stage 1
 
-## Goal
-Provide a reusable logging flow for the assessment that can be consumed by frontend and backend code.
+## Problem
+Build a notification prioritization flow that fetches notifications from the evaluation API and returns the top 10 most important unread items. Priority is determined by:
 
-## High-level flow
-1. Application code calls `Log(stack, level, package, message)`.
-2. The logger validates values against the allowed sets.
-3. The logger sends a `POST` request to the evaluation log API.
-4. The response is surfaced to the caller so failures are visible immediately.
+1. Notification type weight: `Placement > Result > Event`
+2. Recency within the same type
 
-## API contract
-- Endpoint: `POST http://20.207.122.201/evaluation-service/logs`
-- Body:
-  - `stack`: `frontend` or `backend`
-  - `level`: `debug`, `info`, `warn`, `error`, `fatal`
-  - `package`: logical package name such as `api`, `component`, `hook`, `page`, `state`, `style`, `middleware`, `utils`
-  - `message`: descriptive log message
+The API response shown in the prompt does not include a read-state flag, so the current Stage 1 implementation treats all fetched notifications as unread candidates.
 
-## Architecture
-- `logging middleware/` contains the reusable logger.
-- `notification_app_fe/` contains frontend feature folders:
-  - `api`
-  - `component`
-  - `hook`
-  - `page`
-  - `state`
-  - `style`
-- `notification_app_be/` holds backend-side code or placeholders when the backend track is required.
+## Current Architecture
+- `notification_app_be/src/config/evaluation.js`
+  Loads the bearer token and API endpoint from runtime configuration.
+- `notification_app_be/src/api/notifications.js`
+  Fetches notifications from the evaluation API and validates the response shape.
+- `notification_app_be/src/service/prioritizeNotifications.js`
+  Applies the business ranking rules and returns the top `n` notifications.
+- `notification_app_be/src/utils/formatNotifications.js`
+  Formats the ranked result into a readable CLI table for verification and screenshots.
+- `notification_app_be/src/runStage1.js`
+  Composes the flow end to end for execution.
+- `logging middleware/`
+  Sends mandatory assessment logs to the remote logging API during fetch, validation, ranking, and failure paths.
 
-## Design choices
-- Validate inputs before sending the request.
-- Keep the logger transport-agnostic so it can run in browser or Node environments.
-- Resolve auth tokens from runtime configuration first, then from environment or browser storage when present.
+## Ranking Strategy
+Each notification is assigned a static type weight:
 
+- `Placement = 3`
+- `Result = 2`
+- `Event = 1`
+
+The service sorts by:
+
+1. Descending type weight
+2. Descending timestamp
+
+This guarantees that all higher-priority categories appear before lower-priority ones, while still showing the newest entries first inside each category.
+
+## Why This Works
+The requirement is not global recency. It is category-priority first, then recency. A plain descending timestamp sort would violate the prompt because a recent `Event` could incorrectly outrank an older `Placement`. The weighted sort enforces the required business rule directly.
+
+## Efficient Top 10 Maintenance
+The current implementation sorts the fetched list and slices the first 10 results. That is simple and correct for the current API size.
+
+If notifications continue streaming in for a long-running service, the top 10 can be maintained more efficiently with a bounded min-heap of size 10:
+
+1. Convert each notification into a comparable priority key `(weight, timestamp)`.
+2. Push items into the heap until it reaches size 10.
+3. For every new notification, compare it with the smallest item in the heap.
+4. Replace the heap root only when the new notification has higher priority.
+
+That reduces maintenance cost from sorting the full set repeatedly to `O(n log 10)`, which is effectively linear for this fixed top-10 problem.
+
+## Logging Decisions
+The assessment requires extensive usage of the custom logging middleware, so the Stage 1 flow logs the following events:
+
+- fetch started
+- fetch failed
+- invalid payload shape
+- fetch succeeded
+- ranking started
+- unsupported notification types
+- ranking completed
+- fatal runner failure
+
+Messages were kept short to satisfy the remote logging API validation constraints.
+
+## Failure Handling
+- Missing token fails fast in configuration.
+- Non-200 API responses raise explicit errors.
+- Invalid notification payloads are rejected before ranking.
+- Unsupported notification types are ignored and logged as warnings instead of breaking the pipeline.
+
+## Output
+The Stage 1 runner prints the ranked notifications in a stable table layout so the result can be captured as evidence and compared easily after future changes.
+
+![Stage 1 Output](./stage1_OP.png)

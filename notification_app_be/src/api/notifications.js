@@ -42,6 +42,17 @@ async function fetchNotifications() {
 
   const payload = await parseJson(response);
 
+  if (response.status === 401) {
+    await Log(
+      'backend',
+      'error',
+      'handler',
+      'notifications auth expired'
+    );
+
+    throw new Error('Notifications request failed: invalid or expired token.');
+  }
+
   if (!response.ok) {
     await Log(
       'backend',
